@@ -1,4 +1,4 @@
-package payment
+package repository
 
 type PaymentPayload struct {
 	Email    string   `json:"email"`
