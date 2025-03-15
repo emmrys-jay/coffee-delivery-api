@@ -41,3 +41,8 @@ func ConnectAndAutoMigrate() (*gorm.DB, error) {
 
 	return db, nil
 }
+
+func Close(db *gorm.DB) {
+	sqlDB, _ := db.DB()
+	sqlDB.Close()
+}

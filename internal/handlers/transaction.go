@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -56,15 +56,14 @@ func (h *TransactionHandler) InitiatePayment(c *gin.Context) {
 }
 
 func (h *TransactionHandler) HandlePaystackWebhook(c *gin.Context) {
-	var req []map[string]interface{}
-
-	err := json.NewDecoder(c.Request.Body).Decode(&req)
+	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, models.Response{Status: false, Message: "could not unmarshal request body", Data: nil})
+		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, models.Response{Status: false, Message: "could not read request body", Data: nil})
 		return
 	}
 
-	fmt.Printf("%+v\n", req)
+	fmt.Printf("%+v\n", string(body))
 
 	// Verify and process Paystack webhook
 	c.JSON(http.StatusOK, models.Response{Status: true, Message: "webhook received successfully", Data: nil})

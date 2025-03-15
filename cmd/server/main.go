@@ -27,6 +27,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to connect to the database: %v", err)
 	}
+	defer database.Close(db)
 
 	validate := util.NewValidator()
 
