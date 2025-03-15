@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -63,6 +64,8 @@ func (h *TransactionHandler) HandlePaystackWebhook(c *gin.Context) {
 		return
 	}
 
+	fmt.Printf("%+v\n", req)
+
 	// Verify and process Paystack webhook
-	c.JSON(http.StatusOK, models.Response{Status: true, Message: "webhook received successfully", Data: req})
+	c.JSON(http.StatusOK, models.Response{Status: true, Message: "webhook received successfully", Data: nil})
 }
