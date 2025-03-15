@@ -10,11 +10,47 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type Response struct {
+	Status  bool   `json:"status"`
+	Message string `json:"message"`
+	Data    any    `json:"data"`
+}
+
+func IPWhitelistMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		clientIP := c.ClientIP()
+
+		whitelistedIPs := strings.Split(os.Getenv("WHITELISTED_IPS"), ",")
+
+		// Check if IP is whitelisted
+		isWhitelisted := false
+		for _, ip := range whitelistedIPs {
+			if ip == clientIP {
+				isWhitelisted = true
+				break
+			}
+		}
+
+		if !isWhitelisted {
+			logrus.Warnf("Unauthorized IP attempt from: %s", clientIP)
+			c.JSON(http.StatusForbidden, Response{
+				Status:  false,
+				Message: "Unknown IP address sending to webhook",
+				Data:    nil,
+			})
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
+
 func UserAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString := getTokenFromHeader(c)
 		if tokenString == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization token not provided"})
+			c.JSON(http.StatusUnauthorized, Response{Status: false, Message: "Authorization token not provided", Data: nil})
 			c.Abort()
 			return
 		}
@@ -22,13 +58,13 @@ func UserAuthMiddleware() gin.HandlerFunc {
 		claims, err := parseToken(tokenString)
 		if err != nil {
 			logrus.Error("Error parsing token: ", err)
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			c.JSON(http.StatusUnauthorized, Response{Status: false, Message: "Invalid token", Data: nil})
 			c.Abort()
 			return
 		}
 
 		if role, ok := claims["role"].(string); !ok || (role != "user" && role != "admin") {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Insufficient permissions"})
+			c.JSON(http.StatusForbidden, Response{Status: false, Message: "Insufficient permissions", Data: nil})
 			c.Abort()
 			return
 		}
@@ -42,7 +78,7 @@ func AdminAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString := getTokenFromHeader(c)
 		if tokenString == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization token not provided"})
+			c.JSON(http.StatusUnauthorized, Response{Status: false, Message: "Authorization token not provided", Data: nil})
 			c.Abort()
 			return
 		}
@@ -50,13 +86,13 @@ func AdminAuthMiddleware() gin.HandlerFunc {
 		claims, err := parseToken(tokenString)
 		if err != nil {
 			logrus.Error("Error parsing token: ", err)
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			c.JSON(http.StatusUnauthorized, Response{Status: false, Message: "Invalid token", Data: nil})
 			c.Abort()
 			return
 		}
 
 		if role, ok := claims["role"].(string); !ok || role != "admin" {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Insufficient permissions"})
+			c.JSON(http.StatusForbidden, Response{Status: false, Message: "Insufficient permissions", Data: nil})
 			c.Abort()
 			return
 		}

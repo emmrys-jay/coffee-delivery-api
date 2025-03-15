@@ -16,14 +16,14 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-func (r *UserRepository) CreateUser(ctx context.Context, user *models.User) error {
+func (r *UserRepository) CreateUser(ctx context.Context, user *models.User) (*models.User, error) {
 	if err := r.db.WithContext(ctx).Create(user).Error; err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return user, nil
 }
 
-func (r *UserRepository) GetUserByID(ctx context.Context, id int) (*models.User, error) {
+func (r *UserRepository) GetUserByID(ctx context.Context, id uint) (*models.User, error) {
 	var user models.User
 	if err := r.db.WithContext(ctx).First(&user, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -41,7 +41,7 @@ func (r *UserRepository) UpdateUser(ctx context.Context, user *models.User) erro
 	return nil
 }
 
-func (r *UserRepository) DeleteUser(ctx context.Context, id int) error {
+func (r *UserRepository) DeleteUser(ctx context.Context, id uint) error {
 	if err := r.db.WithContext(ctx).Delete(&models.User{}, id).Error; err != nil {
 		return err
 	}

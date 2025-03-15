@@ -3,7 +3,6 @@ package handlers
 import (
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/emmrys-jay/coffee-delivery-api/internal/database/models"
 	"github.com/emmrys-jay/coffee-delivery-api/internal/services"
@@ -16,102 +15,97 @@ type CoffeeHandler struct {
 	validator *validator.Validate
 }
 
-func NewCoffeeHandler(service *services.CoffeeService) *CoffeeHandler {
+func NewCoffeeHandler(service *services.CoffeeService, validator *validator.Validate) *CoffeeHandler {
 	return &CoffeeHandler{
 		service:   service,
-		validator: validator.New(),
+		validator: validator,
 	}
 }
 
 func (h *CoffeeHandler) CreateCoffee(c *gin.Context) {
-	var coffee models.Coffee
+	var coffee models.CreateCoffee
 	if err := c.ShouldBindJSON(&coffee); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, models.Response{Status: false, Message: err.Error(), Data: nil})
 		return
 	}
 
 	if err := h.validator.Struct(coffee); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, models.Response{Status: false, Message: err.Error(), Data: nil})
 		return
 	}
 
-	coffee.CreatedAt = time.Now()
-	coffee.UpdatedAt = time.Now()
-
-	if err := h.service.CreateCoffee(c, &coffee); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	retCoffee, err := h.service.CreateCoffee(c, &coffee)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.Response{Status: false, Message: err.Error(), Data: nil})
 		return
 	}
 
-	c.JSON(http.StatusCreated, coffee)
+	c.JSON(http.StatusCreated, models.Response{Status: true, Message: "Coffee created successfully", Data: retCoffee})
 }
 
 func (h *CoffeeHandler) GetCoffee(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+		c.JSON(http.StatusBadRequest, models.Response{Status: false, Message: "Invalid ID", Data: nil})
 		return
 	}
 
-	coffee, err := h.service.GetCoffeeByID(c, id)
+	coffee, err := h.service.GetCoffeeByID(c, uint(id))
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Coffee not found"})
+		c.JSON(http.StatusNotFound, models.Response{Status: false, Message: "Coffee not found", Data: nil})
 		return
 	}
 
-	c.JSON(http.StatusOK, coffee)
+	c.JSON(http.StatusOK, models.Response{Status: true, Message: "Coffee retrieved successfully", Data: coffee})
 }
 
 func (h *CoffeeHandler) UpdateCoffee(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+		c.JSON(http.StatusBadRequest, models.Response{Status: false, Message: "Invalid ID", Data: nil})
 		return
 	}
 
-	var coffee models.Coffee
+	var coffee models.UpdateCoffee
 	if err := c.ShouldBindJSON(&coffee); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, models.Response{Status: false, Message: err.Error(), Data: nil})
 		return
 	}
 
 	if err := h.validator.Struct(coffee); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, models.Response{Status: false, Message: err.Error(), Data: nil})
 		return
 	}
 
-	coffee.Id = id
-	coffee.UpdatedAt = time.Now()
-
-	if err := h.service.UpdateCoffee(c, &coffee); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	if err := h.service.UpdateCoffee(c, uint(id), &coffee); err != nil {
+		c.JSON(http.StatusInternalServerError, models.Response{Status: false, Message: err.Error(), Data: nil})
 		return
 	}
 
-	c.JSON(http.StatusOK, coffee)
+	c.JSON(http.StatusOK, models.Response{Status: true, Message: "Coffee updated successfully", Data: coffee})
 }
 
 func (h *CoffeeHandler) DeleteCoffee(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+		c.JSON(http.StatusBadRequest, models.Response{Status: false, Message: "Invalid ID", Data: nil})
 		return
 	}
 
-	if err := h.service.DeleteCoffee(c, id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	if err := h.service.DeleteCoffee(c, uint(id)); err != nil {
+		c.JSON(http.StatusInternalServerError, models.Response{Status: false, Message: err.Error(), Data: nil})
 		return
 	}
 
-	c.JSON(http.StatusNoContent, nil)
+	c.JSON(http.StatusNoContent, models.Response{Status: true, Message: "Coffee deleted successfully", Data: nil})
 }
 
 func (h *CoffeeHandler) ListCoffees(c *gin.Context) {
 	coffees, err := h.service.ListCoffees(c)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, models.Response{Status: false, Message: err.Error(), Data: nil})
 		return
 	}
 
-	c.JSON(http.StatusOK, coffees)
+	c.JSON(http.StatusOK, models.Response{Status: true, Message: "Coffees retrieved successfully", Data: coffees})
 }

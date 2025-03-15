@@ -15,31 +15,32 @@ type UserHandler struct {
 	Validator   *validator.Validate
 }
 
-func NewUserHandler(userService *services.UserService) *UserHandler {
+func NewUserHandler(userService *services.UserService, validator *validator.Validate) *UserHandler {
 	return &UserHandler{
 		UserService: userService,
-		Validator:   validator.New(),
+		Validator:   validator,
 	}
 }
 
 func (h *UserHandler) CreateUser(c *gin.Context) {
-	var user models.User
+	var user models.CreateUser
 	if err := c.ShouldBindJSON(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, models.Response{Status: false, Message: err.Error(), Data: nil})
 		return
 	}
 
 	if err := h.Validator.Struct(user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, models.Response{Status: false, Message: err.Error(), Data: nil})
 		return
 	}
 
-	if err := h.UserService.CreateUser(c, &user); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	retUser, err := h.UserService.CreateUser(c, &user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.Response{Status: false, Message: err.Error(), Data: nil})
 		return
 	}
 
-	c.JSON(http.StatusCreated, user)
+	c.JSON(http.StatusCreated, models.Response{Status: true, Message: "User created successfully", Data: retUser})
 }
 
 func (h *UserHandler) GetUser(c *gin.Context) {
@@ -47,17 +48,17 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 
 	idInt, err := strconv.Atoi(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, models.Response{Status: false, Message: err.Error(), Data: nil})
 		return
 	}
 
-	user, err := h.UserService.GetUserByID(c, idInt)
+	user, err := h.UserService.GetUserByID(c, uint(idInt))
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		c.JSON(http.StatusNotFound, models.Response{Status: false, Message: err.Error(), Data: nil})
 		return
 	}
 
-	c.JSON(http.StatusOK, user)
+	c.JSON(http.StatusOK, models.Response{Status: true, Message: "User retrieved successfully", Data: user})
 }
 
 func (h *UserHandler) UpdateUser(c *gin.Context) {
@@ -65,27 +66,27 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 
 	idInt, err := strconv.Atoi(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, models.Response{Status: false, Message: err.Error(), Data: nil})
 		return
 	}
 
 	var user models.UserUpdate
 	if err := c.ShouldBindJSON(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, models.Response{Status: false, Message: err.Error(), Data: nil})
 		return
 	}
 
 	if err := h.Validator.Struct(user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, models.Response{Status: false, Message: err.Error(), Data: nil})
 		return
 	}
 
-	if err := h.UserService.UpdateUser(c, idInt, &user); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	if err := h.UserService.UpdateUser(c, uint(idInt), &user); err != nil {
+		c.JSON(http.StatusInternalServerError, models.Response{Status: false, Message: err.Error(), Data: nil})
 		return
 	}
 
-	c.JSON(http.StatusOK, user)
+	c.JSON(http.StatusOK, models.Response{Status: true, Message: "User updated successfully", Data: user})
 }
 
 func (h *UserHandler) DeleteUser(c *gin.Context) {
@@ -93,45 +94,45 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 
 	idInt, err := strconv.Atoi(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, models.Response{Status: false, Message: err.Error(), Data: nil})
 		return
 	}
 
-	if err := h.UserService.DeleteUser(c, idInt); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	if err := h.UserService.DeleteUser(c, uint(idInt)); err != nil {
+		c.JSON(http.StatusInternalServerError, models.Response{Status: false, Message: err.Error(), Data: nil})
 		return
 	}
 
-	c.Status(http.StatusNoContent)
+	c.JSON(http.StatusNoContent, models.Response{Status: true, Message: "User deleted successfully", Data: nil})
 }
 
 func (h *UserHandler) ListUsers(c *gin.Context) {
 	users, err := h.UserService.GetAllUsers(c)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, models.Response{Status: false, Message: err.Error(), Data: nil})
 		return
 	}
 
-	c.JSON(http.StatusOK, users)
+	c.JSON(http.StatusOK, models.Response{Status: true, Message: "Users retrieved successfully", Data: users})
 }
 
 func (h *UserHandler) Login(c *gin.Context) {
 	var credentials models.LoginRequest
 	if err := c.ShouldBindJSON(&credentials); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, models.Response{Status: false, Message: err.Error(), Data: nil})
 		return
 	}
 
 	if err := h.Validator.Struct(credentials); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, models.Response{Status: false, Message: err.Error(), Data: nil})
 		return
 	}
 
 	token, err := h.UserService.Login(c, credentials.Email, credentials.Password)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, models.Response{Status: false, Message: err.Error(), Data: nil})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": token})
+	c.JSON(http.StatusOK, models.Response{Status: true, Message: "Login successful", Data: gin.H{"token": token}})
 }

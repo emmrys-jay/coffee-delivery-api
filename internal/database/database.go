@@ -29,6 +29,9 @@ func ConnectAndAutoMigrate() (*gorm.DB, error) {
 	err = db.AutoMigrate(
 		models.Coffee{},
 		models.User{},
+		models.Order{},
+		models.OrderItem{},
+		models.Transaction{},
 	)
 	if err != nil {
 		log.Fatalf("failed to run auto migrations: %v", err)
