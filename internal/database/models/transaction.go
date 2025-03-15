@@ -14,7 +14,7 @@ type Transaction struct {
 	TotalAmount      string    `gorm:"type:decimal(10,2)" json:"total_amount"`
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
-	AuthorizationURL string    `gorm:"-" json:"authorization_url"`
+	AuthorizationURL string    `gorm:"not null" json:"authorization_url"`
 }
 
 type TransactionRequest struct {
