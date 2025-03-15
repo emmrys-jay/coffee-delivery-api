@@ -20,10 +20,7 @@ import (
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("could not load configurations: %v", err)
-	}
+	godotenv.Load()
 
 	// Connect to the database
 	db, err := database.ConnectAndAutoMigrate()
