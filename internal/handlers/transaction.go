@@ -32,11 +32,6 @@ func (h *TransactionHandler) InitiatePayment(c *gin.Context) {
 		return
 	}
 
-	if err := h.validate.Struct(req); err != nil {
-		c.JSON(http.StatusBadRequest, models.Response{Status: false, Message: err.Error(), Data: nil})
-		return
-	}
-
 	claims, _ := c.Get("claims")
 	userId, ok := claims.(jwt.MapClaims)["user_id"].(string)
 	if !ok {

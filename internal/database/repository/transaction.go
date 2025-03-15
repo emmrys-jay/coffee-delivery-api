@@ -59,7 +59,7 @@ func (r *TransactionRepository) ListUserTransactions(ctx context.Context, userId
 
 func (r *TransactionRepository) GetPendingTransaction(ctx context.Context, orderId, userId uint) (*models.Transaction, error) {
 	var transaction models.Transaction
-	if err := r.db.WithContext(ctx).Where("order_id = ? AND user_id = ? AND status = ?", orderId, userId, models.PAYMENT_PENDING).First(&transaction).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("order_id = ? AND user_id = ? AND payment_status = ?", orderId, userId, models.PAYMENT_PENDING).First(&transaction).Error; err != nil {
 		return nil, err
 	}
 

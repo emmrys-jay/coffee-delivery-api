@@ -7,7 +7,7 @@ type User struct {
 	FirstName string    `gorm:"size:255;not null" validate:"required" json:"first_name"`
 	LastName  string    `gorm:"size:255;not null" validate:"required" json:"last_name"`
 	Email     string    `gorm:"size:255;unique;not null" validate:"required" json:"email"`
-	Password  string    `gorm:"size:255;not null" validate:"required" json:"password"`
+	Password  string    `gorm:"size:255;not null" validate:"required" json:"-"`
 	Role      string    `gorm:"not null" validate:"required" json:"role"`
 	CreatedAt time.Time `gorm:"not null,index" json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`

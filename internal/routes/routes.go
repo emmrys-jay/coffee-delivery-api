@@ -28,6 +28,7 @@ func SetupRoutes(
 		auth.GET("/orders/:id", orderHandler.GetOrder)
 		auth.GET("/orders", orderHandler.ListUsersOrders)
 		auth.PATCH("/orders/cancel", orderHandler.CancelOrder)
+
 		auth.POST("/orders/pay", trxHandler.InitiatePayment)
 	}
 
